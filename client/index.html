@@ -11,90 +11,10 @@
         <div class="lobby-container">
             <h1 class="lobby-title">Welcome to <span class="highlight">Snake</span></h1>
             <p class="welcome-text" id="welcomeText"></p>
-            <p class="subtitle-text">custom rooms</p>
             
             <div class="create-room-section">
                 <input type="text" id="roomNameInput" placeholder="Enter room name..." maxlength="20">
                 <button id="createRoomBtn">Create Room</button>
-                <button id="toggleConfigBtn" class="toggle-config-btn">Configure</button>
-            </div>
-
-            <!-- Room Configuration Panel -->
-            <div id="roomConfigPanel" class="room-config-panel" style="display: none;">
-                <h3 class="config-title">Game Settings</h3>
-                
-                <div class="config-grid">
-                    <div class="config-item">
-                        <label>Game Mode</label>
-                        <select id="gameModeSelect" class="config-select">
-                            <option value="timed">Timed - Race against the clock</option>
-                            <option value="points">Points - First to reach target</option>
-                            <option value="survival">Survival - Last snake standing</option>
-                            <option value="endless">Endless - No limits</option>
-                            <option value="battle_royale">Battle Royale - Shrinking arena</option>
-                        </select>
-                    </div>
-
-                    <div class="config-item" id="timeLimitConfig">
-                        <label>Time Limit</label>
-                        <select id="timeLimitSelect" class="config-select">
-                            <option value="30">30 seconds</option>
-                            <option value="60" selected>1 minute</option>
-                            <option value="90">1.5 minutes</option>
-                            <option value="120">2 minutes</option>
-                            <option value="180">3 minutes</option>
-                            <option value="300">5 minutes</option>
-                        </select>
-                    </div>
-
-                    <div class="config-item" id="pointLimitConfig" style="display: none;">
-                        <label>Point Limit</label>
-                        <select id="pointLimitSelect" class="config-select">
-                            <option value="10">10 points</option>
-                            <option value="25" selected>25 points</option>
-                            <option value="50">50 points</option>
-                            <option value="75">75 points</option>
-                            <option value="100">100 points</option>
-                        </select>
-                    </div>
-
-                    <div class="config-item">
-                        <label>Max Players</label>
-                        <select id="maxPlayersSelect" class="config-select">
-                            <option value="2">2 players</option>
-                            <option value="3">3 players</option>
-                            <option value="4" selected>4 players</option>
-                            <option value="6">6 players</option>
-                            <option value="8">8 players</option>
-                        </select>
-                    </div>
-
-                    <div class="config-item">
-                        <label>Speed</label>
-                        <select id="speedSelect" class="config-select">
-                            <option value="SLOW">Slow</option>
-                            <option value="NORMAL" selected>Normal</option>
-                            <option value="FAST">Fast</option>
-                            <option value="TURBO">Turbo</option>
-                        </select>
-                    </div>
-
-                    <div class="config-item">
-                        <label>Difficulty</label>
-                        <select id="difficultySelect" class="config-select">
-                            <option value="EASY">Easy</option>
-                            <option value="NORMAL" selected>Normal</option>
-                            <option value="HARD">Hard</option>
-                        </select>
-                    </div>
-
-                    <div class="config-item full-width">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="publicRoomCheckbox" checked>
-                            <span>Public room (visible to everyone)</span>
-                        </label>
-                    </div>
-                </div>
             </div>
 
             <div class="rooms-section">
@@ -102,7 +22,6 @@
                 <div id="roomsList"></div>
             </div>
             
-            <p class="info-text">Account system is disabled for now so click here to change your name</p>
             <button id="changeNameBtn" class="change-name-btn">Change name</button>
         </div>
     </div>
@@ -255,23 +174,11 @@
         const leaveRoomBtn = document.getElementById("leaveRoomBtn");
         const deleteRoomBtn = document.getElementById("deleteRoomBtn");
         const changeNameBtn = document.getElementById("changeNameBtn");
-        const toggleConfigBtn = document.getElementById("toggleConfigBtn");
         const roomConfigPanel = document.getElementById("roomConfigPanel");
         const gameConfigDisplay = document.getElementById("gameConfigDisplay");
         const roomConfigEditor = document.getElementById("roomConfigEditor");
         const saveConfigBtn = document.getElementById("saveConfigBtn");
         const cancelConfigBtn = document.getElementById("cancelConfigBtn");
-        
-        // Configuration inputs
-        const gameModeSelect = document.getElementById("gameModeSelect");
-        const timeLimitSelect = document.getElementById("timeLimitSelect");
-        const pointLimitSelect = document.getElementById("pointLimitSelect");
-        const maxPlayersSelect = document.getElementById("maxPlayersSelect");
-        const speedSelect = document.getElementById("speedSelect");
-        const difficultySelect = document.getElementById("difficultySelect");
-        const publicRoomCheckbox = document.getElementById("publicRoomCheckbox");
-        const timeLimitConfig = document.getElementById("timeLimitConfig");
-        const pointLimitConfig = document.getElementById("pointLimitConfig");
         
         // Edit configuration inputs
         const editGameModeSelect = document.getElementById("editGameModeSelect");
@@ -292,19 +199,6 @@
         // Display welcome message
         const welcomeText = document.getElementById("welcomeText");
         welcomeText.textContent = `Welcome, ${playerName}!`;
-
-        // Toggle configuration panel
-        toggleConfigBtn.addEventListener("click", () => {
-            const isVisible = roomConfigPanel.style.display !== "none";
-            roomConfigPanel.style.display = isVisible ? "none" : "block";
-            toggleConfigBtn.textContent = isVisible ? "Configure" : "Close";
-        });
-
-        // Game mode change handler
-        gameModeSelect.addEventListener("change", () => {
-            const mode = gameModeSelect.value;
-            updateModeVisibility(mode, timeLimitConfig, pointLimitConfig);
-        });
 
         // Edit mode change handler
         editGameModeSelect.addEventListener("change", () => {
@@ -353,21 +247,17 @@
             if (roomName) {
                 const config = {
                     name: roomName,
-                    gameMode: gameModeSelect.value,
-                    timeLimit: parseInt(timeLimitSelect.value),
-                    pointLimit: parseInt(pointLimitSelect.value),
-                    maxPlayers: parseInt(maxPlayersSelect.value),
-                    speed: speedSelect.value,
-                    difficulty: difficultySelect.value,
-                    isPublic: publicRoomCheckbox.checked
+                    gameMode: 'timed',
+                    timeLimit: 60,
+                    pointLimit: 25,
+                    maxPlayers: 4,
+                    speed: 'NORMAL',
+                    difficulty: 'NORMAL',
+                    isPublic: true
                 };
                 
                 socket.emit("createRoom", config);
                 roomNameInput.value = "";
-                
-                // Hide config panel after creating room
-                roomConfigPanel.style.display = "none";
-                toggleConfigBtn.textContent = "Configure";
             }
         });
 
