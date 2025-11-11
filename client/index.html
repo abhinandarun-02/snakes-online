@@ -6,6 +6,23 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+        
+    <!-- Game Stats -->
+    <div id="gameStats">
+        <div class="stat-item">
+            <span class="stat-label">FPS:</span>
+            <span id="fpsCounter">60</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Ping:</span>
+            <span id="pingCounter">0ms</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Online:</span>
+            <span id="playersOnline">0</span>
+        </div>
+    </div>
+    
     <!-- Lobby Screen -->
     <div id="lobbyScreen">
         <div class="lobby-container">
@@ -125,6 +142,7 @@
         <div id="countdown"></div>
         <button id="readyBtn">Ready</button>
     </div>
+    
     <div id="gameOverScreen"></div>
     <canvas id="gameCanvas" width="800" height="600" style="display: none;"></canvas>
 
@@ -161,6 +179,10 @@
         const readyBtn = document.getElementById("readyBtn");
         const countdownEl = document.getElementById("countdown");
         const gameOverScreen = document.getElementById("gameOverScreen");
+        const gameStats = document.getElementById("gameStats");
+        const fpsCounter = document.getElementById("fpsCounter");
+        const pingCounter = document.getElementById("pingCounter");
+        const playersOnline = document.getElementById("playersOnline");
 
         // UI Elements
         const lobbyScreen = document.getElementById("lobbyScreen");
@@ -192,6 +214,63 @@
 
         let game = null;
         let currentRoom = null;
+
+        // FPS counter
+        let lastFrameTime = Date.now();
+        let frameCount = 0;
+        let fps = 60;
+
+        function updateFPS() {
+            frameCount++;
+            const currentTime = Date.now();
+            if (currentTime - lastFrameTime >= 1000) {
+                fps = frameCount;
+                fpsCounter.textContent = fps;
+                frameCount = 0;
+                lastFrameTime = currentTime;
+            }
+            requestAnimationFrame(updateFPS);
+        }
+
+        // Ping measurement
+        let lastPingTime = 0;
+        let pingInterval = null;
+        function measurePing() {
+            const startTime = Date.now();
+            socket.emit("ping", startTime);
+        }
+
+        socket.on("pong", (startTime) => {
+            const ping = Date.now() - startTime;
+            pingCounter.textContent = `${ping}ms`;
+        });
+
+        // Players online counter
+        socket.on("playersOnlineCount", (count) => {
+            playersOnline.textContent = count;
+        });
+
+        // Wait for socket connection before starting ping measurement
+        socket.on("connect", () => {
+            // Clear any existing interval
+            if (pingInterval) clearInterval(pingInterval);
+            // Measure ping immediately
+            measurePing();
+            // Then measure every 2 seconds
+            pingInterval = setInterval(measurePing, 2000);
+        });
+
+        socket.on("disconnect", () => {
+            // Clear ping interval on disconnect
+            if (pingInterval) {
+                clearInterval(pingInterval);
+                pingInterval = null;
+            }
+            pingCounter.textContent = "---";
+        });
+
+        // Start FPS counter immediately
+        requestAnimationFrame(updateFPS);
 
         // Send player name to server
         socket.emit("setPlayerName", playerName);

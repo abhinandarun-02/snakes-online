@@ -48,6 +48,14 @@ export function setupSocketHandlers(io) {
         
         // Send current rooms list
         sendRoomsList(socket);
+        
+        // Send players online count to all clients
+        broadcastPlayersOnline(io);
+
+        // Handle ping measurement
+        socket.on("ping", (timestamp) => {
+            socket.emit("pong", timestamp);
+        });
 
         // Handle player name setting
         socket.on("setPlayerName", (name) => {
@@ -233,11 +241,19 @@ export function setupSocketHandlers(io) {
             console.log("Player disconnected:", socket.id);
             leaveCurrentRoom(socket);
             io.emit("roomsList", getRoomsList());
+            
+            // Update players online count
+            broadcastPlayersOnline(io);
         });
     });
 }
 
 // ===== HELPER FUNCTIONS =====
+function broadcastPlayersOnline(io) {
+    const onlineCount = io.engine.clientsCount;
+    io.emit("playersOnlineCount", onlineCount);
+}
+
 function leaveCurrentRoom(socket) {
     const roomId = socket.currentRoom;
     if (!roomId) return;
