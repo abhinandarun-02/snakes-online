@@ -45,9 +45,9 @@ export function updateGame() {
     }
 }
 
-export function updateSnakeBody(player) {
+export function updateSnakeBody(player, speedMultiplier = 1.0) {
     const BALLS = player.snakeBody;
-    const smoothVar = GAME_CONFIG.SNAKE_SMOOTHNESS;
+    const smoothVar = GAME_CONFIG.SNAKE_SMOOTHNESS * speedMultiplier;
 
     // Move head toward mouse
     BALLS[0].x += (player.mouse.x - BALLS[0].x) * smoothVar;

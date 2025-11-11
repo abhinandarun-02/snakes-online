@@ -16,6 +16,85 @@
             <div class="create-room-section">
                 <input type="text" id="roomNameInput" placeholder="Enter room name..." maxlength="20">
                 <button id="createRoomBtn">Create Room</button>
+                <button id="toggleConfigBtn" class="toggle-config-btn">Configure</button>
+            </div>
+
+            <!-- Room Configuration Panel -->
+            <div id="roomConfigPanel" class="room-config-panel" style="display: none;">
+                <h3 class="config-title">Game Settings</h3>
+                
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label>Game Mode</label>
+                        <select id="gameModeSelect" class="config-select">
+                            <option value="timed">Timed - Race against the clock</option>
+                            <option value="points">Points - First to reach target</option>
+                            <option value="survival">Survival - Last snake standing</option>
+                            <option value="endless">Endless - No limits</option>
+                            <option value="battle_royale">Battle Royale - Shrinking arena</option>
+                        </select>
+                    </div>
+
+                    <div class="config-item" id="timeLimitConfig">
+                        <label>Time Limit</label>
+                        <select id="timeLimitSelect" class="config-select">
+                            <option value="30">30 seconds</option>
+                            <option value="60" selected>1 minute</option>
+                            <option value="90">1.5 minutes</option>
+                            <option value="120">2 minutes</option>
+                            <option value="180">3 minutes</option>
+                            <option value="300">5 minutes</option>
+                        </select>
+                    </div>
+
+                    <div class="config-item" id="pointLimitConfig" style="display: none;">
+                        <label>Point Limit</label>
+                        <select id="pointLimitSelect" class="config-select">
+                            <option value="10">10 points</option>
+                            <option value="25" selected>25 points</option>
+                            <option value="50">50 points</option>
+                            <option value="75">75 points</option>
+                            <option value="100">100 points</option>
+                        </select>
+                    </div>
+
+                    <div class="config-item">
+                        <label>Max Players</label>
+                        <select id="maxPlayersSelect" class="config-select">
+                            <option value="2">2 players</option>
+                            <option value="3">3 players</option>
+                            <option value="4" selected>4 players</option>
+                            <option value="6">6 players</option>
+                            <option value="8">8 players</option>
+                        </select>
+                    </div>
+
+                    <div class="config-item">
+                        <label>Speed</label>
+                        <select id="speedSelect" class="config-select">
+                            <option value="SLOW">Slow</option>
+                            <option value="NORMAL" selected>Normal</option>
+                            <option value="FAST">Fast</option>
+                            <option value="TURBO">Turbo</option>
+                        </select>
+                    </div>
+
+                    <div class="config-item">
+                        <label>Difficulty</label>
+                        <select id="difficultySelect" class="config-select">
+                            <option value="EASY">Easy</option>
+                            <option value="NORMAL" selected>Normal</option>
+                            <option value="HARD">Hard</option>
+                        </select>
+                    </div>
+
+                    <div class="config-item full-width">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="publicRoomCheckbox" checked>
+                            <span>Public room (visible to everyone)</span>
+                        </label>
+                    </div>
+                </div>
             </div>
 
             <div class="rooms-section">
@@ -35,6 +114,88 @@
                 <h2 id="currentRoomName"></h2>
                 <button id="leaveRoomBtn">Leave Room</button>
             </div>
+            
+            <!-- Game Configuration Display -->
+            <div id="gameConfigDisplay" class="game-config-display"></div>
+            
+            <!-- Room Configuration Editor (for admin) -->
+            <div id="roomConfigEditor" class="room-config-panel" style="display: none;">
+                <h3 class="config-title">Edit Game Settings</h3>
+                
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label>Game Mode</label>
+                        <select id="editGameModeSelect" class="config-select">
+                            <option value="timed">Timed - Race against the clock</option>
+                            <option value="points">Points - First to reach target</option>
+                            <option value="survival">Survival - Last snake standing</option>
+                            <option value="endless">Endless - No limits</option>
+                            <option value="battle_royale">Battle Royale - Shrinking arena</option>
+                        </select>
+                    </div>
+
+                    <div class="config-item" id="editTimeLimitConfig">
+                        <label>Time Limit</label>
+                        <select id="editTimeLimitSelect" class="config-select">
+                            <option value="30">30 seconds</option>
+                            <option value="60">1 minute</option>
+                            <option value="90">1.5 minutes</option>
+                            <option value="120">2 minutes</option>
+                            <option value="180">3 minutes</option>
+                            <option value="300">5 minutes</option>
+                        </select>
+                    </div>
+
+                    <div class="config-item" id="editPointLimitConfig" style="display: none;">
+                        <label>Point Limit</label>
+                        <select id="editPointLimitSelect" class="config-select">
+                            <option value="10">10 points</option>
+                            <option value="25">25 points</option>
+                            <option value="50">50 points</option>
+                            <option value="75">75 points</option>
+                            <option value="100">100 points</option>
+                        </select>
+                    </div>
+
+                    <div class="config-item">
+                        <label>Max Players</label>
+                        <select id="editMaxPlayersSelect" class="config-select">
+                            <option value="2">2 players</option>
+                            <option value="3">3 players</option>
+                            <option value="4">4 players</option>
+                            <option value="6">6 players</option>
+                            <option value="8">8 players</option>
+                        </select>
+                    </div>
+
+                    <div class="config-item">
+                        <label>Speed</label>
+                        <select id="editSpeedSelect" class="config-select">
+                            <option value="SLOW">Slow</option>
+                            <option value="NORMAL">Normal</option>
+                            <option value="FAST">Fast</option>
+                            <option value="TURBO">Turbo</option>
+                        </select>
+                    </div>
+
+                    <div class="config-item">
+                        <label>Difficulty</label>
+                        <select id="editDifficultySelect" class="config-select">
+                            <option value="EASY">Easy</option>
+                            <option value="NORMAL">Normal</option>
+                            <option value="HARD">Hard</option>
+                        </select>
+                    </div>
+
+                    <div class="config-item full-width">
+                        <div style="display: flex; gap: 8px;">
+                            <button id="saveConfigBtn" class="save-config-btn">Save Changes</button>
+                            <button id="cancelConfigBtn" class="cancel-config-btn">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <div id="playersList"></div>
             <button id="deleteRoomBtn" style="display: none;">Delete Room</button>
         </div>
@@ -94,6 +255,33 @@
         const leaveRoomBtn = document.getElementById("leaveRoomBtn");
         const deleteRoomBtn = document.getElementById("deleteRoomBtn");
         const changeNameBtn = document.getElementById("changeNameBtn");
+        const toggleConfigBtn = document.getElementById("toggleConfigBtn");
+        const roomConfigPanel = document.getElementById("roomConfigPanel");
+        const gameConfigDisplay = document.getElementById("gameConfigDisplay");
+        const roomConfigEditor = document.getElementById("roomConfigEditor");
+        const saveConfigBtn = document.getElementById("saveConfigBtn");
+        const cancelConfigBtn = document.getElementById("cancelConfigBtn");
+        
+        // Configuration inputs
+        const gameModeSelect = document.getElementById("gameModeSelect");
+        const timeLimitSelect = document.getElementById("timeLimitSelect");
+        const pointLimitSelect = document.getElementById("pointLimitSelect");
+        const maxPlayersSelect = document.getElementById("maxPlayersSelect");
+        const speedSelect = document.getElementById("speedSelect");
+        const difficultySelect = document.getElementById("difficultySelect");
+        const publicRoomCheckbox = document.getElementById("publicRoomCheckbox");
+        const timeLimitConfig = document.getElementById("timeLimitConfig");
+        const pointLimitConfig = document.getElementById("pointLimitConfig");
+        
+        // Edit configuration inputs
+        const editGameModeSelect = document.getElementById("editGameModeSelect");
+        const editTimeLimitSelect = document.getElementById("editTimeLimitSelect");
+        const editPointLimitSelect = document.getElementById("editPointLimitSelect");
+        const editMaxPlayersSelect = document.getElementById("editMaxPlayersSelect");
+        const editSpeedSelect = document.getElementById("editSpeedSelect");
+        const editDifficultySelect = document.getElementById("editDifficultySelect");
+        const editTimeLimitConfig = document.getElementById("editTimeLimitConfig");
+        const editPointLimitConfig = document.getElementById("editPointLimitConfig");
 
         let game = null;
         let currentRoom = null;
@@ -104,6 +292,39 @@
         // Display welcome message
         const welcomeText = document.getElementById("welcomeText");
         welcomeText.textContent = `Welcome, ${playerName}!`;
+
+        // Toggle configuration panel
+        toggleConfigBtn.addEventListener("click", () => {
+            const isVisible = roomConfigPanel.style.display !== "none";
+            roomConfigPanel.style.display = isVisible ? "none" : "block";
+            toggleConfigBtn.textContent = isVisible ? "Configure" : "Close";
+        });
+
+        // Game mode change handler
+        gameModeSelect.addEventListener("change", () => {
+            const mode = gameModeSelect.value;
+            updateModeVisibility(mode, timeLimitConfig, pointLimitConfig);
+        });
+
+        // Edit mode change handler
+        editGameModeSelect.addEventListener("change", () => {
+            const mode = editGameModeSelect.value;
+            updateModeVisibility(mode, editTimeLimitConfig, editPointLimitConfig);
+        });
+
+        function updateModeVisibility(mode, timeLimitEl, pointLimitEl) {
+            // Show/hide time limit based on mode
+            if (mode === "timed" || mode === "battle_royale") {
+                timeLimitEl.style.display = "block";
+                pointLimitEl.style.display = "none";
+            } else if (mode === "points") {
+                timeLimitEl.style.display = "none";
+                pointLimitEl.style.display = "block";
+            } else {
+                timeLimitEl.style.display = "none";
+                pointLimitEl.style.display = "none";
+            }
+        }
 
         // Change name button handler
         changeNameBtn.addEventListener("click", () => {
@@ -130,8 +351,23 @@
         createRoomBtn.addEventListener("click", () => {
             const roomName = roomNameInput.value.trim();
             if (roomName) {
-                socket.emit("createRoom", roomName);
+                const config = {
+                    name: roomName,
+                    gameMode: gameModeSelect.value,
+                    timeLimit: parseInt(timeLimitSelect.value),
+                    pointLimit: parseInt(pointLimitSelect.value),
+                    maxPlayers: parseInt(maxPlayersSelect.value),
+                    speed: speedSelect.value,
+                    difficulty: difficultySelect.value,
+                    isPublic: publicRoomCheckbox.checked
+                };
+                
+                socket.emit("createRoom", config);
                 roomNameInput.value = "";
+                
+                // Hide config panel after creating room
+                roomConfigPanel.style.display = "none";
+                toggleConfigBtn.textContent = "Configure";
             }
         });
 
@@ -153,6 +389,31 @@
             if (confirm("Are you sure you want to delete this room?")) {
                 socket.emit("deleteRoom");
             }
+        });
+
+        // Save config button handler
+        saveConfigBtn.addEventListener("click", () => {
+            const newConfig = {
+                gameMode: editGameModeSelect.value,
+                timeLimit: parseInt(editTimeLimitSelect.value),
+                pointLimit: parseInt(editPointLimitSelect.value),
+                maxPlayers: parseInt(editMaxPlayersSelect.value),
+                speed: editSpeedSelect.value,
+                difficulty: editDifficultySelect.value,
+                isPublic: currentRoom.config.isPublic
+            };
+            
+            socket.emit("updateRoomConfig", newConfig);
+            
+            // Hide editor, show display
+            roomConfigEditor.style.display = "none";
+            gameConfigDisplay.style.display = "block";
+        });
+
+        // Cancel config button handler
+        cancelConfigBtn.addEventListener("click", () => {
+            roomConfigEditor.style.display = "none";
+            gameConfigDisplay.style.display = "block";
         });
 
         // Ready button handler
@@ -178,6 +439,13 @@
         socket.on("roomUpdate", (room) => {
             currentRoom = room;
             updateRoomScreen(room);
+            
+            // Show notification if config was updated
+            if (roomConfigEditor.style.display === "block" || gameConfigDisplay.style.display === "none") {
+                // Config was being edited, close editor
+                roomConfigEditor.style.display = "none";
+                gameConfigDisplay.style.display = "block";
+            }
         });
 
         socket.on("leftRoom", () => {
@@ -204,7 +472,8 @@
                 roomCard.innerHTML = `
                     <div class="room-card-info">
                         <h3>${room.name}</h3>
-                        <p>${room.playerCount}/${room.maxPlayers} players</p>
+                        <p class="room-mode">${room.gameMode}</p>
+                        <p class="room-players">${room.playerCount}/${room.maxPlayers} players</p>
                     </div>
                     <button class="join-btn" onclick="window.joinRoom('${room.id}')">Join</button>
                 `;
@@ -240,6 +509,87 @@
                 deleteRoomBtn.style.display = "none";
             }
 
+            // Hide editor if it was open
+            roomConfigEditor.style.display = "none";
+            gameConfigDisplay.style.display = "block";
+
+            // Display game configuration
+            const config = room.config;
+            const gameModeNames = {
+                'timed': 'Timed',
+                'points': 'Points',
+                'survival': 'Survival',
+                'endless': 'Endless',
+                'battle_royale': 'Battle Royale'
+            };
+            
+            let configHTML = `
+                <div class="config-display-grid">
+                    <div class="config-display-item">
+                        <span class="config-label">Mode:</span>
+                        <span class="config-value">${gameModeNames[config.gameMode] || config.gameMode}</span>
+                    </div>
+                    <div class="config-display-item">
+                        <span class="config-label">Players:</span>
+                        <span class="config-value">${room.players.length}/${config.maxPlayers}</span>
+                    </div>
+            `;
+            
+            if (config.gameMode === 'timed' || config.gameMode === 'battle_royale') {
+                configHTML += `
+                    <div class="config-display-item">
+                        <span class="config-label">Time:</span>
+                        <span class="config-value">${config.timeLimit}s</span>
+                    </div>
+                `;
+            }
+            
+            if (config.gameMode === 'points') {
+                configHTML += `
+                    <div class="config-display-item">
+                        <span class="config-label">Target:</span>
+                        <span class="config-value">${config.pointLimit} points</span>
+                    </div>
+                `;
+            }
+            
+            configHTML += `
+                    <div class="config-display-item">
+                        <span class="config-label">Speed:</span>
+                        <span class="config-value">${config.speed}</span>
+                    </div>
+                    <div class="config-display-item">
+                        <span class="config-label">Difficulty:</span>
+                        <span class="config-value">${config.difficulty}</span>
+                    </div>
+                </div>
+            `;
+            
+            gameConfigDisplay.innerHTML = configHTML;
+            
+            // Add edit button for admin (only if game hasn't started)
+            const gameStarted = room.gameState && room.gameState.gameStarted;
+            if (room.admin === socket.id && !gameStarted) {
+                const editBtn = document.createElement('button');
+                editBtn.className = 'edit-config-btn';
+                editBtn.textContent = 'Edit Settings';
+                editBtn.addEventListener('click', () => {
+                    const config = currentRoom.config;
+                    editGameModeSelect.value = config.gameMode;
+                    editTimeLimitSelect.value = config.timeLimit;
+                    editPointLimitSelect.value = config.pointLimit;
+                    editMaxPlayersSelect.value = config.maxPlayers;
+                    editSpeedSelect.value = config.speed;
+                    editDifficultySelect.value = config.difficulty;
+                    
+                    updateModeVisibility(config.gameMode, editTimeLimitConfig, editPointLimitConfig);
+                    
+                    gameConfigDisplay.style.display = "none";
+                    roomConfigEditor.style.display = "block";
+                });
+                gameConfigDisplay.appendChild(editBtn);
+            }
+
             // Render players list
             playersList.innerHTML = "";
             room.players.forEach(player => {
@@ -248,8 +598,8 @@
                 const isAdmin = player.id === room.admin;
                 const isYou = player.id === socket.id;
                 const displayName = isYou ? `${player.name} (You)` : player.name;
-                const adminBadge = isAdmin ? '<span class="admin-badge">👑 Admin</span>' : '';
-                const readyBadge = player.ready ? '<span class="ready-badge">✓ Ready</span>' : '';
+                const adminBadge = isAdmin ? '<span class="admin-badge">Admin</span>' : '';
+                const readyBadge = player.ready ? '<span class="ready-badge">Ready</span>' : '';
                 playerItem.innerHTML = `
                     <span class="player-name">${displayName}</span>
                     ${adminBadge}
@@ -281,18 +631,31 @@
             gameOverScreen.style.display = "block";
 
             const me = scores.find(s => s.id === socket.id);
-            const maxScore = Math.max(...scores.map(s => s.score));
-
-            let resultText;
-            if (me) {
-                resultText = me.score === maxScore ? "YOU WIN 🎉" : "YOU LOSE 😢";
-            } else {
-                resultText = "You were not in this round.";
+            
+            let resultText = "GAME OVER";
+            if (me && me.isWinner) {
+                resultText = "YOU WIN!";
+            } else if (me && scores.length > 1) {
+                resultText = "GAME OVER";
             }
+
+            let scoresHTML = '<div class="scores-list">';
+            scores.forEach((score, index) => {
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                const isMe = score.id === socket.id;
+                scoresHTML += `
+                    <div class="score-item ${isMe ? 'highlight-me' : ''}">
+                        <span>${medal} ${score.name}${isMe ? ' (You)' : ''}</span>
+                        <span>${score.score} pts</span>
+                    </div>
+                `;
+            });
+            scoresHTML += '</div>';
 
             gameOverScreen.innerHTML = `
                 <h1>${resultText}</h1>
-                ${me ? `<p>Your score: ${me.score}</p>` : ""}
+                ${me ? `<p class="my-score">Your score: ${me.score}</p>` : ""}
+                ${scoresHTML}
             `;
             
             readyBtn.style.display = "inline-block";
