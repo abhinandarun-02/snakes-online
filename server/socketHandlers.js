@@ -27,6 +27,7 @@ function createRoom(roomId, roomName, adminId, config = {}) {
             difficulty: config.difficulty || 'NORMAL',
             isPublic: config.isPublic !== undefined ? config.isPublic : true
         },
+        chat: [],
         gameState: {
             players: {},
             food: { x: 300, y: 300, radius: GAME_CONFIG.FOOD_RADIUS },
@@ -74,7 +75,21 @@ export function setupSocketHandlers(io) {
 
                     // Update player in room.gameState.players
                     const gp = room.gameState.players[socket.id];
+                    const oldName = gp ? gp.name : "Player";
                     if (gp) gp.name = socket.playerName;
+
+                    // Broadcast system message about name change
+                    if (oldName !== socket.playerName) {
+                        const nameChangeMessage = {
+                            id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                            type: 'system',
+                            event: 'name_changed',
+                            content: `${oldName} changed name to ${socket.playerName}`,
+                            timestamp: Date.now()
+                        };
+                        room.chat.push(nameChangeMessage);
+                        io.to(roomId).emit("chatMessage", { roomId, message: nameChangeMessage });
+                    }
 
                     io.to(roomId).emit("roomUpdate", getRoomData(room));
                     io.emit("roomsList", getRoomsList());
@@ -127,12 +142,25 @@ export function setupSocketHandlers(io) {
             console.log(`Player ${socket.playerName} (${socket.id}) joined room ${room.name}`);
             
             socket.emit("joinedRoom", getRoomData(room));
+            socket.emit("chatHistory", room.chat);
+            
+            // Broadcast system message about user joining
+            const joinMessage = {
+                id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                type: 'system',
+                event: 'user_joined',
+                content: `${socket.playerName} joined the room`,
+                timestamp: Date.now()
+            };
+            room.chat.push(joinMessage);
+            socket.to(roomId).emit("chatMessage", { roomId, message: joinMessage });
+            
             io.to(roomId).emit("roomUpdate", getRoomData(room));
             io.emit("roomsList", getRoomsList());
         });
 
         socket.on("leaveRoom", () => {
-            leaveCurrentRoom(socket);
+            leaveCurrentRoom(socket, io);
             socket.emit("leftRoom");
             sendRoomsList(socket);
         });
@@ -180,6 +208,18 @@ export function setupSocketHandlers(io) {
                 return;
             }
 
+            // Track what changed
+            const changes = [];
+            if (room.config.gameMode !== newConfig.gameMode) {
+                changes.push(`game mode to ${newConfig.gameMode}`);
+            }
+            if (room.config.speed !== newConfig.speed) {
+                changes.push(`speed to ${newConfig.speed}`);
+            }
+            if (room.config.difficulty !== newConfig.difficulty) {
+                changes.push(`difficulty to ${newConfig.difficulty}`);
+            }
+            
             // Update room configuration
             room.config = {
                 ...room.config,
@@ -196,6 +236,19 @@ export function setupSocketHandlers(io) {
             room.maxPlayers = newConfig.maxPlayers;
 
             console.log(`Room ${room.name} configuration updated by admin`);
+            
+            // Broadcast system message about config change
+            if (changes.length > 0) {
+                const configMessage = {
+                    id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                    type: 'system',
+                    event: 'config_changed',
+                    content: `Admin changed ${changes.join(', ')}`,
+                    timestamp: Date.now()
+                };
+                room.chat.push(configMessage);
+                io.to(roomId).emit("chatMessage", { roomId, message: configMessage });
+            }
             
             // Notify all players in the room
             io.to(roomId).emit("roomUpdate", getRoomData(room));
@@ -221,6 +274,36 @@ export function setupSocketHandlers(io) {
             }
         });
 
+        socket.on("sendChatMessage", (rawMessage) => {
+            const roomId = socket.currentRoom;
+            if (!roomId) return;
+
+            const room = rooms.get(roomId);
+            if (!room) return;
+
+            const content = String(rawMessage || "").trim();
+            if (!content) return;
+
+            const sanitizedContent = content.slice(0, 300);
+            const message = {
+                id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                senderId: socket.id,
+                senderName: socket.playerName || "Player",
+                content: sanitizedContent,
+                timestamp: Date.now()
+            };
+
+            room.chat.push(message);
+            if (room.chat.length > 100) {
+                room.chat.shift();
+            }
+
+            io.to(roomId).emit("chatMessage", {
+                roomId,
+                message
+            });
+        });
+
         // Update mouse position
         socket.on("updateMouse", (mouse) => {
             const roomId = socket.currentRoom;
@@ -239,7 +322,7 @@ export function setupSocketHandlers(io) {
         // Handle disconnect
         socket.on("disconnect", () => {
             console.log("Player disconnected:", socket.id);
-            leaveCurrentRoom(socket);
+            leaveCurrentRoom(socket, io);
             io.emit("roomsList", getRoomsList());
             
             // Update players online count
@@ -254,13 +337,15 @@ function broadcastPlayersOnline(io) {
     io.emit("playersOnlineCount", onlineCount);
 }
 
-function leaveCurrentRoom(socket) {
+function leaveCurrentRoom(socket, io) {
     const roomId = socket.currentRoom;
     if (!roomId) return;
 
     const room = rooms.get(roomId);
     if (!room) return;
 
+    const playerName = socket.playerName || "Player";
+    
     // Remove player from room
     room.players = room.players.filter(p => p.id !== socket.id);
     delete room.gameState.players[socket.id];
@@ -271,13 +356,44 @@ function leaveCurrentRoom(socket) {
     if (room.players.length === 0) {
         rooms.delete(roomId);
         console.log(`Room ${room.name} deleted (empty)`);
-    } else if (wasAdmin) {
-        // Transfer admin to next player
-        room.admin = room.players[0].id;
-        console.log(`Admin transferred to ${room.admin} in room ${room.name}`);
-        socket.to(roomId).emit("roomUpdate", getRoomData(room));
     } else {
-        socket.to(roomId).emit("roomUpdate", getRoomData(room));
+        // Broadcast system message about user leaving
+        const leaveMessage = {
+            id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            type: 'system',
+            event: 'user_left',
+            content: `${playerName} left the room`,
+            timestamp: Date.now()
+        };
+        room.chat.push(leaveMessage);
+        
+        if (wasAdmin) {
+            // Transfer admin to next player
+            const newAdmin = room.players[0];
+            room.admin = newAdmin.id;
+            console.log(`Admin transferred to ${room.admin} in room ${room.name}`);
+            
+            // Broadcast admin change message
+            const adminMessage = {
+                id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                type: 'system',
+                event: 'admin_changed',
+                content: `${newAdmin.name} is now the room admin`,
+                timestamp: Date.now()
+            };
+            room.chat.push(adminMessage);
+            
+            if (io) {
+                io.to(roomId).emit("chatMessage", { roomId, message: leaveMessage });
+                io.to(roomId).emit("chatMessage", { roomId, message: adminMessage });
+                io.to(roomId).emit("roomUpdate", getRoomData(room));
+            }
+        } else {
+            if (io) {
+                io.to(roomId).emit("chatMessage", { roomId, message: leaveMessage });
+                io.to(roomId).emit("roomUpdate", getRoomData(room));
+            }
+        }
     }
 
     socket.leave(roomId);

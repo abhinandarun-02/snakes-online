@@ -137,6 +137,18 @@
         </div>
     </div>
 
+    <!-- Chat Panel (Left Side) -->
+    <div id="chatPanel" class="chat-panel-left" style="display: none;">
+        <div class="chat-header">
+            <h3 class="chat-title">Room Chat</h3>
+        </div>
+        <div id="chatMessages" class="chat-messages"></div>
+        <form id="chatForm" class="chat-form" autocomplete="off">
+            <input type="text" id="chatInput" placeholder="Type a message..." maxlength="300" autocomplete="off">
+            <button type="submit" id="chatSendBtn">Send</button>
+        </form>
+    </div>
+
     <!-- Game UI -->
     <div id="ui" style="display: none;">
         <div id="countdown"></div>
@@ -201,6 +213,10 @@
         const roomConfigEditor = document.getElementById("roomConfigEditor");
         const saveConfigBtn = document.getElementById("saveConfigBtn");
         const cancelConfigBtn = document.getElementById("cancelConfigBtn");
+        const chatMessages = document.getElementById("chatMessages");
+        const chatForm = document.getElementById("chatForm");
+        const chatInput = document.getElementById("chatInput");
+        const chatPanel = document.getElementById("chatPanel");
         
         // Edit configuration inputs
         const editGameModeSelect = document.getElementById("editGameModeSelect");
@@ -297,6 +313,91 @@
                 timeLimitEl.style.display = "none";
                 pointLimitEl.style.display = "none";
             }
+        }
+
+        function clearChatMessages() {
+            if (chatMessages) {
+                chatMessages.innerHTML = "";
+            }
+            if (chatInput) {
+                chatInput.value = "";
+            }
+        }
+
+        function formatChatTime(timestamp) {
+            if (!timestamp) return "";
+            const date = new Date(timestamp);
+            if (Number.isNaN(date.getTime())) {
+                return "";
+            }
+            return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        }
+
+        function appendChatMessage(message) {
+            if (!chatMessages || !message) return;
+
+            const messageEl = document.createElement("div");
+            messageEl.className = "chat-message";
+            
+            // Handle system messages
+            if (message.type === 'system') {
+                messageEl.classList.add("system");
+                
+                const contentSpan = document.createElement("span");
+                contentSpan.className = "chat-content";
+                contentSpan.textContent = message.content || "";
+                
+                messageEl.appendChild(contentSpan);
+                chatMessages.appendChild(messageEl);
+                return;
+            }
+            
+            // Handle user messages
+            const isSelf = message.senderId === socket.id;
+            if (isSelf) {
+                messageEl.classList.add("me");
+            }
+
+            const authorSpan = document.createElement("span");
+            authorSpan.className = "chat-author";
+            const senderName = message.senderName || "Player";
+            const displayName = isSelf ? `${senderName} (You)` : senderName;
+            authorSpan.textContent = displayName;
+
+            const contentSpan = document.createElement("span");
+            contentSpan.className = "chat-content";
+            contentSpan.textContent = message.content || "";
+
+            const timestampSpan = document.createElement("span");
+            timestampSpan.className = "chat-timestamp";
+            timestampSpan.textContent = formatChatTime(message.timestamp);
+
+            messageEl.appendChild(authorSpan);
+            messageEl.appendChild(contentSpan);
+            if (timestampSpan.textContent) {
+                messageEl.appendChild(timestampSpan);
+            }
+
+            chatMessages.appendChild(messageEl);
+        }
+
+        function scrollChatToBottom(force = false) {
+            if (!chatMessages) return;
+            const distanceFromBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight;
+            if (force || distanceFromBottom < 40) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }
+
+        if (chatForm) {
+            chatForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                if (!currentRoom) return;
+                const message = chatInput.value.trim();
+                if (!message) return;
+                socket.emit("sendChatMessage", message);
+                chatInput.value = "";
+            });
         }
 
         // Change name button handler
@@ -397,6 +498,19 @@
             renderRoomsList(rooms);
         });
 
+        socket.on("chatHistory", (messages) => {
+            if (!Array.isArray(messages) || !currentRoom) return;
+            clearChatMessages();
+            messages.forEach(appendChatMessage);
+            scrollChatToBottom(true);
+        });
+
+        socket.on("chatMessage", ({ roomId, message }) => {
+            if (!currentRoom || !message || currentRoom.id !== roomId) return;
+            appendChatMessage(message);
+            scrollChatToBottom();
+        });
+
         socket.on("joinedRoom", (room) => {
             currentRoom = room;
             showRoomScreen(room);
@@ -453,19 +567,26 @@
         function showRoomScreen(room) {
             lobbyScreen.style.display = "none";
             roomScreen.style.display = "block";
+            chatPanel.style.display = "flex";
             gameUI.style.display = "flex";
             canvas.style.display = "block";
+            clearChatMessages();
             updateRoomScreen(room);
+            if (chatInput) {
+                setTimeout(() => chatInput.focus(), 50);
+            }
         }
 
         function showLobbyScreen() {
             lobbyScreen.style.display = "flex";
             roomScreen.style.display = "none";
+            chatPanel.style.display = "none";
             gameUI.style.display = "none";
             canvas.style.display = "none";
             gameOverScreen.style.display = "none";
             readyBtn.style.display = "inline-block";
             readyBtn.disabled = false;
+            clearChatMessages();
         }
 
         function updateRoomScreen(room) {
