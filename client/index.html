@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multiplayer Snake</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="ui">
+        <div id="countdown"></div>
+        <button id="readyBtn">Ready</button>
+    </div>
+    <div id="gameOverScreen"></div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script type="module">
+        import { Game } from './game.js';
+
+        const socket = io();
+        const canvas = document.getElementById("gameCanvas");
+        const readyBtn = document.getElementById("readyBtn");
+        const countdownEl = document.getElementById("countdown");
+        const gameOverScreen = document.getElementById("gameOverScreen");
+
+        // Initialize game
+        const game = new Game(canvas, socket);
+
+        // Ready button handler
+        readyBtn.addEventListener("click", () => {
+            gameOverScreen.style.display = "none";
+            socket.emit("playerReady");
+            readyBtn.disabled = true;
+        });
+
+        // Socket event listeners for UI updates
+        socket.on("countdown", (seconds) => {
+            countdownEl.textContent = `Game starts in: ${seconds}`;
+        });
+
+        socket.on("gameStart", () => {
+            countdownEl.textContent = "Go!";
+            setTimeout(() => countdownEl.textContent = "", 1000);
+            readyBtn.style.display = "none";
+        });
+
+        socket.on("timerUpdate", (timeLeft) => {
+            countdownEl.textContent = `Time left: ${timeLeft}s`;
+        });
+
+        socket.on("gameOver", (scores) => {
+            gameOverScreen.style.display = "block";
+
+            const me = scores.find(s => s.id === socket.id);
+            const maxScore = Math.max(...scores.map(s => s.score));
+
+            let resultText;
+            if (me) {
+                resultText = me.score === maxScore ? "YOU WIN 🎉" : "YOU LOSE 😢";
+            } else {
+                resultText = "You were not in this round.";
+            }
+
+            gameOverScreen.innerHTML = `
+                <h1>${resultText}</h1>
+                ${me ? `<p>Your score: ${me.score}</p>` : ""}
+            `;
+            
+            readyBtn.style.display = "inline-block";
+            readyBtn.disabled = false;
+        });
+    </script>
+</body>
+</html>
