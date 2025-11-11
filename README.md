@@ -41,12 +41,13 @@ Then open your browser to `http://localhost:3000`
 
 ## How to Play
 
-1. **Join**: Open the game in your browser (up to 3 players)
-2. **Ready Up**: Click the "Ready" button
-3. **Play**: Once all players are ready, a 5-second countdown begins
-4. **Control**: Move your mouse to control your snake
-5. **Objective**: Eat food to grow your snake and increase your score
-6. **Win**: Have the highest score when the 60-second timer ends
+1. **Enter the lobby**: Open the game and pick a room (or create your own public room).
+2. **Configure or chill**: Room admins can tweak mode, limits, speed, and difficulty before the match.
+3. **Ready up**: Hit the "Ready" button when you are set. Everyone sees ready status in real time.
+4. **Countdown**: A short countdown gives every player a moment before snakes spawn.
+5. **Move**: Glide your mouse cursor to steer your snake smoothly around the arena.
+6. **Score**: Eat food to grow longer and climb the live leaderboard.
+7. **Win**: When the timer or point limit completes, the leaderboard locks in and a winner is crowned.
 
 ## Architecture
 
@@ -67,13 +68,14 @@ Then open your browser to `http://localhost:3000`
 
 ## Features
 
-- Real-time multiplayer (up to 3 players)
-- Smooth snake movement following mouse cursor
-- Collision detection for food consumption
-- 60-second timed rounds
-- Ready-up system with countdown
-- Score tracking and winner determination
-- Responsive canvas rendering at 30 FPS
+- Real-time multiplayer rooms with admin-configurable game modes, limits, and player caps
+- Lobby with live rooms list, in-room ready indicators, and host controls
+- Integrated chat panel for each room
+- Responsive in-room UI with an embedded live leaderboard during matches
+- Smooth mouse-driven snake movement rendered at 30 FPS
+- Collision detection, food spawning, and balanced growth curves
+- Timed, points, survival, endless, and battle royale modes (with shrinking arena)
+- Game-over summary highlighting podium finishers and personal results
 
 ## Technologies
 
