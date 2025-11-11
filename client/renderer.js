@@ -40,9 +40,10 @@ export class Renderer {
     }
 
     drawPlayerScore(player) {
+        const displayName = player.name || `Player ${player.id.substring(0, 4)}`;
         this.ctx.fillStyle = "black";
         this.ctx.fillText(
-            `P${player.id.substring(0, 4)}: ${player.score}`,
+            `${displayName}: ${player.score}`,
             player.snakeBody[0].x,
             player.snakeBody[0].y - 20
         );

@@ -68,9 +68,10 @@ export function updateSnakeBody(player) {
 }
 
 // ===== PLAYER MANAGEMENT =====
-export function createPlayer(socketId) {
+export function createPlayer(socketId, playerName = "Player") {
     return {
         id: socketId,
+        name: playerName,
         snakeBody: [new SnakeBody(GAME_CONFIG.SNAKE_HEAD_RADIUS, getRandomColor(), GAME_CONFIG.SNAKE_SMOOTHNESS)],
         score: 0,
         mouse: { x: 0, y: 0 },

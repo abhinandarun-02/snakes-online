@@ -6,16 +6,75 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="ui">
+    <!-- Lobby Screen -->
+    <div id="lobbyScreen">
+        <div class="lobby-container">
+            <h1 class="lobby-title">Welcome to <span class="highlight">Snake</span></h1>
+            <p class="welcome-text" id="welcomeText"></p>
+            <p class="subtitle-text">custom rooms</p>
+            
+            <div class="create-room-section">
+                <input type="text" id="roomNameInput" placeholder="Enter room name..." maxlength="20">
+                <button id="createRoomBtn">Create Room</button>
+            </div>
+
+            <div class="rooms-section">
+                <h2>Available Rooms</h2>
+                <div id="roomsList"></div>
+            </div>
+            
+            <p class="info-text">Account system is disabled for now so click here to change your name</p>
+            <button id="changeNameBtn" class="change-name-btn">Change name</button>
+        </div>
+    </div>
+
+    <!-- Room Screen -->
+    <div id="roomScreen" style="display: none;">
+        <div class="room-info">
+            <div class="room-header">
+                <h2 id="currentRoomName"></h2>
+                <button id="leaveRoomBtn">Leave Room</button>
+            </div>
+            <div id="playersList"></div>
+            <button id="deleteRoomBtn" style="display: none;">Delete Room</button>
+        </div>
+    </div>
+
+    <!-- Game UI -->
+    <div id="ui" style="display: none;">
         <div id="countdown"></div>
         <button id="readyBtn">Ready</button>
     </div>
     <div id="gameOverScreen"></div>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <canvas id="gameCanvas" width="800" height="600" style="display: none;"></canvas>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script type="module">
         import { Game } from './game.js';
+
+        // Random name generator
+        function generateRandomName() {
+            const adjectives = ['Swift', 'Cunning', 'Brave', 'Mighty', 'Quick', 'Silent', 'Fierce', 'Wild', 'Bold', 'Smart'];
+            const nouns = ['Viper', 'Cobra', 'Python', 'Mamba', 'Rattler', 'Serpent', 'Adder', 'Anaconda', 'Boa', 'Snake'];
+            const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const noun = nouns[Math.floor(Math.random() * nouns.length)];
+            return `${adj}${noun}`;
+        }
+
+        // Get player name from localStorage if available, otherwise prompt and store
+        let playerName = localStorage.getItem('playerName') || '';
+        if (playerName) {
+            playerName = String(playerName).trim();
+            if (playerName.length > 15) playerName = playerName.substring(0, 15);
+        } else {
+            let input = prompt("Welcome to Snake Game! 🐍\n\nPlease enter your name:") || "";
+            input = input.trim();
+            // If user didn't provide a name, generate a random one
+            if (!input) input = generateRandomName();
+            playerName = input.substring(0, 15);
+            // store for future visits
+            try { localStorage.setItem('playerName', playerName); } catch (e) { /* ignore storage errors */ }
+        }
 
         const socket = io();
         const canvas = document.getElementById("gameCanvas");
@@ -23,8 +82,78 @@
         const countdownEl = document.getElementById("countdown");
         const gameOverScreen = document.getElementById("gameOverScreen");
 
-        // Initialize game
-        const game = new Game(canvas, socket);
+        // UI Elements
+        const lobbyScreen = document.getElementById("lobbyScreen");
+        const roomScreen = document.getElementById("roomScreen");
+        const gameUI = document.getElementById("ui");
+        const roomNameInput = document.getElementById("roomNameInput");
+        const createRoomBtn = document.getElementById("createRoomBtn");
+        const roomsList = document.getElementById("roomsList");
+        const currentRoomName = document.getElementById("currentRoomName");
+        const playersList = document.getElementById("playersList");
+        const leaveRoomBtn = document.getElementById("leaveRoomBtn");
+        const deleteRoomBtn = document.getElementById("deleteRoomBtn");
+        const changeNameBtn = document.getElementById("changeNameBtn");
+
+        let game = null;
+        let currentRoom = null;
+
+        // Send player name to server
+        socket.emit("setPlayerName", playerName);
+        
+        // Display welcome message
+        const welcomeText = document.getElementById("welcomeText");
+        welcomeText.textContent = `Welcome, ${playerName}!`;
+
+        // Change name button handler
+        changeNameBtn.addEventListener("click", () => {
+            const newName = prompt("Enter your new name:") || "";
+            const trimmedName = newName.trim();
+            
+            if (trimmedName) {
+                playerName = trimmedName.length > 15 ? trimmedName.substring(0, 15) : trimmedName;
+            } else if (newName !== "") {
+                // If user entered empty string explicitly, generate random name
+                playerName = generateRandomName();
+            } else {
+                // User cancelled prompt (newName === "" and trimmedName === "") -> do nothing
+                return;
+            }
+
+            // Persist and notify server
+            try { localStorage.setItem('playerName', playerName); } catch (e) { /* ignore */ }
+            socket.emit("setPlayerName", playerName);
+            welcomeText.textContent = `Welcome, ${playerName}!`;
+        });
+
+        // ===== LOBBY HANDLERS =====
+        createRoomBtn.addEventListener("click", () => {
+            const roomName = roomNameInput.value.trim();
+            if (roomName) {
+                socket.emit("createRoom", roomName);
+                roomNameInput.value = "";
+            }
+        });
+
+        roomNameInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                createRoomBtn.click();
+            }
+        });
+
+        function joinRoom(roomId) {
+            socket.emit("joinRoom", roomId);
+        }
+
+        leaveRoomBtn.addEventListener("click", () => {
+            socket.emit("leaveRoom");
+        });
+
+        deleteRoomBtn.addEventListener("click", () => {
+            if (confirm("Are you sure you want to delete this room?")) {
+                socket.emit("deleteRoom");
+            }
+        });
 
         // Ready button handler
         readyBtn.addEventListener("click", () => {
@@ -32,6 +161,106 @@
             socket.emit("playerReady");
             readyBtn.disabled = true;
         });
+
+        // ===== ROOM SOCKET LISTENERS =====
+        socket.on("roomsList", (rooms) => {
+            renderRoomsList(rooms);
+        });
+
+        socket.on("joinedRoom", (room) => {
+            currentRoom = room;
+            showRoomScreen(room);
+            if (!game) {
+                game = new Game(canvas, socket);
+            }
+        });
+
+        socket.on("roomUpdate", (room) => {
+            currentRoom = room;
+            updateRoomScreen(room);
+        });
+
+        socket.on("leftRoom", () => {
+            currentRoom = null;
+            showLobbyScreen();
+        });
+
+        socket.on("error", (message) => {
+            alert(message);
+        });
+
+        // ===== RENDER FUNCTIONS =====
+        function renderRoomsList(rooms) {
+            roomsList.innerHTML = "";
+            
+            if (rooms.length === 0) {
+                roomsList.innerHTML = '<p class="no-rooms">No rooms available. Create one!</p>';
+                return;
+            }
+
+            rooms.forEach(room => {
+                const roomCard = document.createElement("div");
+                roomCard.className = "room-card";
+                roomCard.innerHTML = `
+                    <div class="room-card-info">
+                        <h3>${room.name}</h3>
+                        <p>${room.playerCount}/${room.maxPlayers} players</p>
+                    </div>
+                    <button class="join-btn" onclick="window.joinRoom('${room.id}')">Join</button>
+                `;
+                roomsList.appendChild(roomCard);
+            });
+        }
+
+        function showRoomScreen(room) {
+            lobbyScreen.style.display = "none";
+            roomScreen.style.display = "block";
+            gameUI.style.display = "flex";
+            canvas.style.display = "block";
+            updateRoomScreen(room);
+        }
+
+        function showLobbyScreen() {
+            lobbyScreen.style.display = "flex";
+            roomScreen.style.display = "none";
+            gameUI.style.display = "none";
+            canvas.style.display = "none";
+            gameOverScreen.style.display = "none";
+            readyBtn.style.display = "inline-block";
+            readyBtn.disabled = false;
+        }
+
+        function updateRoomScreen(room) {
+            currentRoomName.textContent = room.name;
+            
+            // Show delete button only for admin
+            if (room.admin === socket.id) {
+                deleteRoomBtn.style.display = "block";
+            } else {
+                deleteRoomBtn.style.display = "none";
+            }
+
+            // Render players list
+            playersList.innerHTML = "";
+            room.players.forEach(player => {
+                const playerItem = document.createElement("div");
+                playerItem.className = "player-item";
+                const isAdmin = player.id === room.admin;
+                const isYou = player.id === socket.id;
+                const displayName = isYou ? `${player.name} (You)` : player.name;
+                const adminBadge = isAdmin ? '<span class="admin-badge">👑 Admin</span>' : '';
+                const readyBadge = player.ready ? '<span class="ready-badge">✓ Ready</span>' : '';
+                playerItem.innerHTML = `
+                    <span class="player-name">${displayName}</span>
+                    ${adminBadge}
+                    ${readyBadge}
+                `;
+                playersList.appendChild(playerItem);
+            });
+        }
+
+        // Make joinRoom available globally
+        window.joinRoom = joinRoom;
 
         // Socket event listeners for UI updates
         socket.on("countdown", (seconds) => {
