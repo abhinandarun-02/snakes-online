@@ -7,6 +7,7 @@ export class Game {
         this.socket = socket;
         this.renderer = new Renderer(canvas);
         this.gameState = null;
+        this.onStateUpdate = null; // Callback for state updates
         
         this.setupSocketListeners();
         this.setupInputHandlers();
@@ -26,11 +27,17 @@ export class Game {
     setupSocketListeners() {
         this.socket.on("init", (state) => {
             this.gameState = state;
+            if (this.onStateUpdate) {
+                this.onStateUpdate(state);
+            }
         });
 
         this.socket.on("state", (state) => {
             this.gameState = state;
             this.render();
+            if (this.onStateUpdate) {
+                this.onStateUpdate(state);
+            }
         });
     }
 
